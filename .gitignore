@@ -1,0 +1,57 @@
+# ==== Python ====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ==== Django ====
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_root/
+
+# ==== Environment / Secrets ====
+.env
+.env.*
+!.env.example
+
+# ==== Virtual Environments ====
+venv/
+env/
+ENV/
+.venv/
+
+# ==== Migrations (optional - uncomment only if you intentionally don't want to track them) ====
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# ==== Docker ====
+*.pid
+
+# ==== IDE / Editor ====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ==== Testing / Coverage ====
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# ==== Distribution / Packaging ====
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ==== Jupyter Notebook (in case used for testing) ====
+.ipynb_checkpoints
