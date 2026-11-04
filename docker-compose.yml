@@ -1,28 +1,36 @@
-
-version: '3.9'
-
 services:
   web:
-    env_file:
-      - .env
     build: .
-    container_name: django_app
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
+    env_file: .env
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn resturant.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     ports:
       - "8000:8000"
+    volumes:
+      - media_data:/app/media
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
-    env_file:
-      - .env
     image: postgres:17
-    container_name: postgres_db
     environment:
-      POSTGRES_DB: food
-      POSTGRES_USER: postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # The database is only reachable from the web container.
+    # Uncomment to inspect it from your machine:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+volumes:
+  postgres_data:
+  media_data:

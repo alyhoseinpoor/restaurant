@@ -1,30 +1,33 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 from .views import (
-    FoodViewSet,
+    CartItemViewSet,
+    CartView,
     CategoryViewSet,
+    CheckoutView,
+    CommentViewSet,
+    FavoriteViewSet,
+    FoodViewSet,
+    LoginView,
     OrderViewSet,
-    CommentListCreate,
-    FavoriteListCreate
+    RegisterView,
 )
 
 router = DefaultRouter()
-router.register('foods', FoodViewSet)
-router.register('categories', CategoryViewSet)
-router.register('orders', OrderViewSet)
-
+router.register('foods', FoodViewSet, basename='food')
+router.register('categories', CategoryViewSet, basename='category')
+router.register('comments', CommentViewSet, basename='comment')
+router.register('favorites', FavoriteViewSet, basename='favorite')
+router.register('cart/items', CartItemViewSet, basename='cart-item')
+router.register('orders', OrderViewSet, basename='order')
 
 urlpatterns = [
     path('api/', include(router.urls)),
-
-    # APIView 
-    path('api/comments/', CommentListCreate.as_view()),
-    path('api/favorites/', FavoriteListCreate.as_view()),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/cart/', CartView.as_view(), name='cart'),
+    path('api/cart/checkout/', CheckoutView.as_view(), name='checkout'),
+    path('api/register/', RegisterView.as_view(), name='register'),
+    path('api/token/', LoginView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
