@@ -1,28 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { resolveImage, fetchAllComments, createComment, addToCart, addFavorite } from '../api';
+import { resolveImage, fetchComments, createComment, addToCart, addFavorite } from '../api';
 import { useAuth } from '../auth/AuthContext';
 
 export default function FoodModal({ food, onClose }) {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(isAuthenticated);
+  const [loadingComments, setLoadingComments] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [notice, setNotice] = useState('');
 
+  // دیدن نظرهای تأییدشده برای همه آزاد است (نیاز به لاگین ندارد)
   useEffect(() => {
-    if (!isAuthenticated) return; // دیدن نظرات هم نیاز به لاگین داره (بک‌اند IsAuthenticated)
     let alive = true;
     setLoadingComments(true);
-    fetchAllComments()
-      .then((all) => {
-        if (alive) setComments(all.filter((c) => c.food === food.id));
-      })
+    fetchComments(food.id)
+      .then((list) => { if (alive) setComments(list); })
       .catch(() => {})
-      .finally(() => alive && setLoadingComments(false));
+      .finally(() => { if (alive) setLoadingComments(false); });
     return () => { alive = false; };
-  }, [food.id, isAuthenticated]);
+  }, [food.id]);
 
   function goLogin() {
     onClose();
@@ -92,16 +90,9 @@ export default function FoodModal({ food, onClose }) {
 
         {notice && <p className="form-error" style={{ color: 'var(--maroon)' }}>{notice}</p>}
 
-        <div className="section-title">نظرات{isAuthenticated ? ` (${comments.length})` : ''}</div>
+        <div className="section-title">نظرات ({comments.length})</div>
 
-        {!isAuthenticated ? (
-          <p className="empty-note">
-            برای دیدن و ثبت نظر باید{' '}
-            <button className="link-btn" style={{ color: 'var(--maroon)' }} onClick={goLogin}>
-              وارد بشی
-            </button>
-          </p>
-        ) : loadingComments ? (
+        {loadingComments ? (
           <p className="empty-note">در حال بارگذاری نظرات...</p>
         ) : comments.length === 0 ? (
           <p className="empty-note">هنوز نظر تأییدشده‌ای برای این غذا ثبت نشده.</p>
@@ -109,14 +100,14 @@ export default function FoodModal({ food, onClose }) {
           comments.map((c) => (
             <div className="comment-row" key={c.id}>
               <div className="who">
-                {user && c.user === user.id ? 'شما' : `کاربر #${c.user}`}
+                {user && c.username === user.username ? 'شما' : c.username}
               </div>
               <div>{c.text}</div>
             </div>
           ))
         )}
 
-        {isAuthenticated && (
+        {isAuthenticated ? (
           <form className="comment-form" onSubmit={handleCommentSubmit}>
             <textarea
               rows={3}
@@ -127,6 +118,13 @@ export default function FoodModal({ food, onClose }) {
             />
             <button className="btn-primary" type="submit">ثبت نظر</button>
           </form>
+        ) : (
+          <p className="empty-note">
+            برای ثبت نظر باید{' '}
+            <button className="link-btn" style={{ color: 'var(--maroon)' }} onClick={goLogin}>
+              وارد بشی
+            </button>
+          </p>
         )}
       </div>
     </div>

@@ -1,0 +1,242 @@
+[
+  {
+    "model": "food.category",
+    "pk": 1,
+    "fields": {
+      "name": "کباب",
+      "slug": "kebab",
+      "img": null
+    }
+  },
+  {
+    "model": "food.category",
+    "pk": 2,
+    "fields": {
+      "name": "پیتزا",
+      "slug": "pizza",
+      "img": null
+    }
+  },
+  {
+    "model": "food.category",
+    "pk": 3,
+    "fields": {
+      "name": "ماکارونی و پاستا",
+      "slug": "macaroni",
+      "img": null
+    }
+  },
+  {
+    "model": "food.category",
+    "pk": 4,
+    "fields": {
+      "name": "املت و صبحانه",
+      "slug": "omlet",
+      "img": null
+    }
+  },
+  {
+    "model": "food.category",
+    "pk": 5,
+    "fields": {
+      "name": "قهوه و نوشیدنی",
+      "slug": "ghahverh",
+      "img": null
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 1,
+    "fields": {
+      "title": "کباب کوبیده",
+      "desc": "دو سیخ کوبیده گوساله و مرغ با برنج ایرانی، گوجه کبابی و کره.",
+      "price": 285000,
+      "category": 1,
+      "img": null,
+      "available": true,
+      "slug": "koobideh"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 2,
+    "fields": {
+      "title": "جوجه کباب",
+      "desc": "سینه مرغ مزه‌دارشده با زعفران، همراه برنج و سبزی تازه.",
+      "price": 265000,
+      "category": 1,
+      "img": null,
+      "available": true,
+      "slug": "joojeh-kabab"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 3,
+    "fields": {
+      "title": "برگ ممتاز",
+      "desc": "فیله گوساله ترد و نرم روی آتش زغال، با برنج زعفرانی.",
+      "price": 395000,
+      "category": 1,
+      "img": null,
+      "available": false,
+      "slug": "barg"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 4,
+    "fields": {
+      "title": "پیتزا مخصوص",
+      "desc": "ژامبون، قارچ، فلفل دلمه‌ای و پنیر موزارلا فراوان.",
+      "price": 245000,
+      "category": 2,
+      "img": null,
+      "available": true,
+      "slug": "pizza-makhsoos"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 5,
+    "fields": {
+      "title": "پیتزا پپرونی",
+      "desc": "سس مخصوص، پپرونی تند و پنیر پیتزا روی خمیر نازک.",
+      "price": 255000,
+      "category": 2,
+      "img": null,
+      "available": true,
+      "slug": "pizza-pepperoni"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 6,
+    "fields": {
+      "title": "پیتزا مارگاریتا",
+      "desc": "سس گوجه، موزارلا و ریحان تازه؛ ساده و خوشمزه.",
+      "price": 195000,
+      "category": 2,
+      "img": null,
+      "available": true,
+      "slug": "pizza-margherita"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 7,
+    "fields": {
+      "title": "ماکارونی با سس گوشت",
+      "desc": "اسپاگتی با سس بولونز و پنیر پارمزان.",
+      "price": 215000,
+      "category": 3,
+      "img": null,
+      "available": true,
+      "slug": "macaroni-bolognese"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 8,
+    "fields": {
+      "title": "پنه آلفردو",
+      "desc": "پنه با سس خامه، مرغ گریل‌شده و قارچ.",
+      "price": 235000,
+      "category": 3,
+      "img": null,
+      "available": true,
+      "slug": "penne-alfredo"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 9,
+    "fields": {
+      "title": "لازانیا",
+      "desc": "لایه‌های ورق لازانیا با گوشت چرخ‌کرده، بشامل و پنیر.",
+      "price": 265000,
+      "category": 3,
+      "img": null,
+      "available": true,
+      "slug": "lasagna"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 10,
+    "fields": {
+      "title": "املت",
+      "desc": "املت سنتی با گوجه تازه، همراه نان تازه.",
+      "price": 120000,
+      "category": 4,
+      "img": null,
+      "available": true,
+      "slug": "omelette"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 11,
+    "fields": {
+      "title": "نیمرو اسفناج",
+      "desc": "تخم‌مرغ با اسفناج و پنیر فتا.",
+      "price": 135000,
+      "category": 4,
+      "img": null,
+      "available": true,
+      "slug": "spinach-eggs"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 12,
+    "fields": {
+      "title": "کته کره‌ای با تخم‌مرغ",
+      "desc": "صبحانه سبک با برنج، کره و نیمرو.",
+      "price": 110000,
+      "category": 4,
+      "img": null,
+      "available": true,
+      "slug": "katteh-eggs"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 13,
+    "fields": {
+      "title": "اسپرسو",
+      "desc": "یک شات اسپرسو با طعم پررنگ.",
+      "price": 65000,
+      "category": 5,
+      "img": null,
+      "available": true,
+      "slug": "espresso"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 14,
+    "fields": {
+      "title": "لاته",
+      "desc": "اسپرسو با شیر بخارداده و فوم نرم.",
+      "price": 95000,
+      "category": 5,
+      "img": null,
+      "available": true,
+      "slug": "latte"
+    }
+  },
+  {
+    "model": "food.food",
+    "pk": 15,
+    "fields": {
+      "title": "دوغ محلی",
+      "desc": "دوغ خنک با نعناع خشک.",
+      "price": 40000,
+      "category": 5,
+      "img": null,
+      "available": true,
+      "slug": "doogh"
+    }
+  }
+]

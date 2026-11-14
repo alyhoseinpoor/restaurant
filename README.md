@@ -48,6 +48,7 @@ cd restaurant
 cp .env.example .env        # then edit SECRET_KEY and DB_PASSWORD
 docker compose up --build
 docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py loaddata demo_menu   # optional: sample categories and foods
 ```
 
 - API docs: http://localhost:8000/api/docs/
@@ -64,8 +65,23 @@ pip install -r requirements.txt
 cp .env.example .env     # set SECRET_KEY and leave DB_NAME empty to use SQLite
 python manage.py migrate
 python manage.py createsuperuser
+python manage.py loaddata demo_menu    # optional: sample categories and foods
 python manage.py runserver
 ```
+
+## Frontend (demo client)
+
+A small React + Vite client lives in [`frontend/`](frontend/). It shows the menu, the cart,
+checkout, order history, favorites and comments, and talks to this API with JWT.
+
+```bash
+cd frontend
+cp .env.example .env     # VITE_API_BASE_URL=http://localhost:8000
+npm install
+npm run dev              # http://localhost:5173
+```
+
+The backend allows this origin through `CORS_ALLOWED_ORIGINS` (see `.env.example`).
 
 ## Tests
 

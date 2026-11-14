@@ -56,7 +56,9 @@ dist/
 # ==== Jupyter Notebook (in case used for testing) ====
 .ipynb_checkpoints
 
+# ==== Frontend (Node) ====
 node_modules/
 .vite/
 dist/
+frontend/.env
 *.zip

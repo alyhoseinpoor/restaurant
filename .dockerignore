@@ -12,3 +12,4 @@ staticfiles/
 .vscode/
 .idea/
 .ruff_cache/
+frontend/

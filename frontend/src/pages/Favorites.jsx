@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchFavorites, fetchFoods, resolveImage } from '../api';
+import { fetchFavorites, fetchFoods, removeFavorite, resolveImage } from '../api';
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -16,6 +16,15 @@ export default function Favorites() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleRemove(id) {
+    try {
+      await removeFavorite(id);
+      setFavorites((list) => list.filter((f) => f.id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  }
 
   return (
     <div>
@@ -41,6 +50,9 @@ export default function Favorites() {
                 <h3>{food.title}</h3>
                 <div className="price-row">
                   <span>{Number(food.price).toLocaleString('fa-IR')} تومان</span>
+                  <button className="btn-small remove" onClick={() => handleRemove(fav.id)}>
+                    حذف
+                  </button>
                 </div>
               </div>
             </div>
