@@ -1,0 +1,2270 @@
+{
+  "info": {
+    "_postman_id": "4294ca7f-9a89-471d-9a2e-cab6c5f99ea3",
+    "name": "Restaurant API",
+    "description": "# Restaurant API\n\nMenu, cart, checkout, orders, comments and favorites. JWT authentication.\n\n## Quick start\n1. Start the API (see the repository README) and load the sample menu: `python manage.py loaddata demo_menu`.\n2. Import this collection (and optionally the environment). `base_url` defaults to `http://localhost:8000`.\n3. Open the **Collection Runner** and run the collection. Folders 0 to 6 run a complete scenario: register, login, browse, cart, checkout, cancel, comments, favorites and error cases. Every request has tests.\n4. Folder 7 needs a superuser; set `admin_username` and `admin_password` or deselect the folder.\n\n## How it works\n- Runtime values (`access_token`, `food_id`, `order_id`, ...) are collection variables, saved by test scripts.\n- Authentication is set on the collection (`Bearer {{access_token}}`); public folders override it with *No Auth*.\n- Interactive docs: `{{base_url}}/api/docs/` (Swagger UI) and `{{base_url}}/api/redoc/`.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58274424",
+    "_collection_link": "https://go.postman.co/collection/58274424-4294ca7f-9a89-471d-9a2e-cab6c5f99ea3?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "0. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('username', 'demo_' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "const user = pm.response.json();",
+                  "pm.test('Returns the new user without the password', () => {",
+                  "  pm.expect(user).to.have.property('id');",
+                  "  pm.expect(user).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{username}}@example.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register",
+                ""
+              ]
+            },
+            "description": "Create a new user. A random username is generated for every run, so the collection can be re-run without cleanup."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{username}}@example.com\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/register/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "register",
+                    ""
+                  ]
+                },
+                "description": "Create a new user. A random username is generated for every run, so the collection can be re-run without cleanup."
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 7,\n  \"username\": \"demo_1731942000000\",\n  \"email\": \"demo_1731942000000@example.com\"\n}"
+            },
+            {
+              "name": "400 Weak password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{username}}@example.com\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/register/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "register",
+                    ""
+                  ]
+                },
+                "description": "Create a new user. A random username is generated for every run, so the collection can be re-run without cleanup."
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"password\": [\n    \"This password is too common.\",\n    \"This password is entirely numeric.\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Returns access and refresh tokens', () => {",
+                  "  pm.expect(data).to.have.property('access');",
+                  "  pm.expect(data).to.have.property('refresh');",
+                  "});",
+                  "pm.collectionVariables.set('access_token', data.access);",
+                  "pm.collectionVariables.set('refresh_token', data.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                ""
+              ]
+            },
+            "description": "Exchange username and password for a JWT access token (60 min) and a refresh token (1 day). Both are saved as collection variables."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/token/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "token",
+                    ""
+                  ]
+                },
+                "description": "Exchange username and password for a JWT access token (60 min) and a refresh token (1 day). Both are saved as collection variables."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIs...\",\n  \"access\": \"eyJhbGciOiJIUzI1NiIs...\"\n}"
+            },
+            {
+              "name": "401 Wrong credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/token/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "token",
+                    ""
+                  ]
+                },
+                "description": "Exchange username and password for a JWT access token (60 min) and a refresh token (1 day). Both are saved as collection variables."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"detail\": \"No active account found with the given credentials\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Returns a new access token', () => pm.expect(data).to.have.property('access'));",
+                  "pm.collectionVariables.set('access_token', data.access);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                "refresh",
+                ""
+              ]
+            },
+            "description": "Get a new access token using the refresh token."
+          },
+          "response": []
+        }
+      ],
+      "description": "Create an account and get JWT tokens. The access token is stored automatically and used by every other request.",
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "1. Menu",
+      "item": [
+        {
+          "name": "List categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Paginated list of categories', () => {",
+                  "  pm.expect(data).to.have.property('count');",
+                  "  pm.expect(data.results).to.be.an('array');",
+                  "});",
+                  "if (data.results.length) {",
+                  "  pm.collectionVariables.set('category_id', data.results[0].id);",
+                  "  pm.collectionVariables.set('category_slug', data.results[0].slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            },
+            "description": "All food categories. Saves the first category for later requests."
+          },
+          "response": []
+        },
+        {
+          "name": "List foods",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Paginated list of foods', () => pm.expect(data.results).to.be.an('array'));",
+                  "const food = data.results.find((f) => f.available);",
+                  "pm.test('At least one available food exists (load demo_menu)', () => pm.expect(Boolean(food)).to.be.true);",
+                  "if (food) { pm.collectionVariables.set('food_id', food.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ]
+            },
+            "description": "All foods (paginated). Saves the first **available** food as `food_id`, used by the cart, comment and favorite requests. Load the sample menu first: `python manage.py loaddata demo_menu`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/foods/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "foods",
+                    ""
+                  ]
+                },
+                "description": "All foods (paginated). Saves the first **available** food as `food_id`, used by the cart, comment and favorite requests. Load the sample menu first: `python manage.py loaddata demo_menu`."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"count\": 15,\n  \"next\": \"http://localhost:8000/api/foods/?page=2\",\n  \"previous\": null,\n  \"results\": [\n    {\n      \"id\": 1,\n      \"title\": \"کباب کوبیده\",\n      \"desc\": \"دو سیخ کوبیده ...\",\n      \"price\": 285000,\n      \"category\": 1,\n      \"img\": null,\n      \"available\": true,\n      \"slug\": \"koobideh\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search foods",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Results is an array', () => pm.expect(pm.response.json().results).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/?search=پیتزا",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "پیتزا"
+                }
+              ]
+            },
+            "description": "Search in title and description."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter foods by category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Results is an array', () => pm.expect(pm.response.json().results).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/?category={{category_slug}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "{{category_slug}}"
+                }
+              ]
+            },
+            "description": "Filter by category slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter foods by price range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const results = pm.response.json().results;",
+                  "pm.test('Every food is inside the price range', () => {",
+                  "  pm.expect(results.every((f) => f.price >= 100000 && f.price <= 250000)).to.be.true;",
+                  "});",
+                  "pm.test('Sorted by price ascending', () => {",
+                  "  const prices = results.map((f) => f.price);",
+                  "  pm.expect(prices.every((p, i) => i === 0 || prices[i - 1] <= p)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/?min_price=100000&max_price=250000&ordering=price",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "min_price",
+                  "value": "100000"
+                },
+                {
+                  "key": "max_price",
+                  "value": "250000"
+                },
+                {
+                  "key": "ordering",
+                  "value": "price"
+                }
+              ]
+            },
+            "description": "Price range filter combined with ordering (`price`, `-price`, `title`). Also available: `available=true`."
+          },
+          "response": []
+        },
+        {
+          "name": "Food detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns the requested food', () => pm.expect(String(pm.response.json().id)).to.eql(String(pm.collectionVariables.get('food_id'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/{{food_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                "{{food_id}}",
+                ""
+              ]
+            },
+            "description": "A single food."
+          },
+          "response": []
+        }
+      ],
+      "description": "Public endpoints: categories and foods with search, filtering and ordering. Lists are paginated (10 per page, `?page=2`).",
+      "auth": {
+        "type": "noauth"
+      }
+    },
+    {
+      "name": "2. Cart",
+      "item": [
+        {
+          "name": "View cart (empty)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const cart = pm.response.json();",
+                  "pm.test('Cart is empty', () => {",
+                  "  pm.expect(cart.items).to.eql([]);",
+                  "  pm.expect(cart.total).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                ""
+              ]
+            },
+            "description": "Current cart with items and total. A new user starts with an empty cart."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item to cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "const item = pm.response.json();",
+                  "pm.test('Item created with quantity 1', () => pm.expect(item.quantity).to.eql(1));",
+                  "pm.collectionVariables.set('item_id', item.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "Add a food. The unit price is copied from the menu at this moment. Quantity is 1 to 50."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/cart/items/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cart",
+                    "items",
+                    ""
+                  ]
+                },
+                "description": "Add a food. The unit price is copied from the menu at this moment. Quantity is 1 to 50."
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 12,\n  \"food\": 1,\n  \"food_title\": \"کباب کوبیده\",\n  \"quantity\": 1,\n  \"unit_price\": 285000,\n  \"subtotal\": 285000\n}"
+            },
+            {
+              "name": "400 Food unavailable",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/cart/items/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cart",
+                    "items",
+                    ""
+                  ]
+                },
+                "description": "Add a food. The unit price is copied from the menu at this moment. Quantity is 1 to 50."
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"food\": [\n    \"This food is currently unavailable.\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add the same food again (merges)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Quantity increased to 2', () => pm.expect(pm.response.json().quantity).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "The food is already in the cart, so its quantity increases (200, not 201)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update item quantity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Quantity is 3', () => pm.expect(pm.response.json().quantity).to.eql(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/{{item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{item_id}}",
+                ""
+              ]
+            },
+            "description": "Set an exact quantity. Only items of your own open cart can be changed (others return 404)."
+          },
+          "response": []
+        },
+        {
+          "name": "View cart (with total)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const cart = pm.response.json();",
+                  "pm.test('One item with quantity 3', () => {",
+                  "  pm.expect(cart.items.length).to.eql(1);",
+                  "  pm.expect(cart.items[0].quantity).to.eql(3);",
+                  "});",
+                  "pm.test('Total = quantity x unit price', () => pm.expect(cart.total).to.eql(3 * cart.items[0].unit_price));",
+                  "pm.collectionVariables.set('cart_total', cart.total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                ""
+              ]
+            },
+            "description": "The total is calculated on the server: quantity x unit price."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/cart/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cart",
+                    ""
+                  ]
+                },
+                "description": "The total is calculated on the server: quantity x unit price."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 4,\n  \"status\": \"cart\",\n  \"items\": [\n    {\n      \"id\": 12,\n      \"food\": 1,\n      \"food_title\": \"کباب کوبیده\",\n      \"quantity\": 3,\n      \"unit_price\": 285000,\n      \"subtotal\": 855000\n    }\n  ],\n  \"total\": 855000,\n  \"created_at\": \"2026-11-18T14:05:00+03:30\",\n  \"placed_at\": null\n}"
+            }
+          ]
+        }
+      ],
+      "description": "The cart belongs to the logged-in user (one open cart per user, created on first use). Adding the same food twice increases its quantity."
+    },
+    {
+      "name": "3. Orders",
+      "item": [
+        {
+          "name": "Checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "const order = pm.response.json();",
+                  "pm.test('Order is placed', () => pm.expect(order.status).to.eql('placed'));",
+                  "pm.test('Total matches the cart total', () => pm.expect(order.total).to.eql(Number(pm.collectionVariables.get('cart_total'))));",
+                  "pm.collectionVariables.set('order_id', order.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/checkout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "checkout",
+                ""
+              ]
+            },
+            "description": "Place the order. Prices are re-read from the menu inside a database transaction. Fails with 400 if the cart is empty or a food became unavailable."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/cart/checkout/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cart",
+                    "checkout",
+                    ""
+                  ]
+                },
+                "description": "Place the order. Prices are re-read from the menu inside a database transaction. Fails with 400 if the cart is empty or a food became unavailable."
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 4,\n  \"status\": \"placed\",\n  \"items\": [\n    {\n      \"id\": 12,\n      \"food\": 1,\n      \"food_title\": \"کباب کوبیده\",\n      \"quantity\": 3,\n      \"unit_price\": 285000,\n      \"subtotal\": 855000\n    }\n  ],\n  \"total\": 855000,\n  \"created_at\": \"2026-11-18T14:05:00+03:30\",\n  \"placed_at\": \"2026-11-18T14:07:12+03:30\"\n}"
+            },
+            {
+              "name": "400 Empty cart",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/cart/checkout/",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cart",
+                    "checkout",
+                    ""
+                  ]
+                },
+                "description": "Place the order. Prices are re-read from the menu inside a database transaction. Fails with 400 if the cart is empty or a food became unavailable."
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"detail\": \"Your cart is empty.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List my orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('The new order is in the list', () => {",
+                  "  pm.expect(data.results.some((o) => String(o.id) === String(pm.collectionVariables.get('order_id')))).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                ""
+              ]
+            },
+            "description": "Order history of the current user (the open cart is not included)."
+          },
+          "response": []
+        },
+        {
+          "name": "Order detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has one item', () => pm.expect(pm.response.json().items.length).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                ""
+              ]
+            },
+            "description": "A single order with its items."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Order is cancelled', () => pm.expect(pm.response.json().status).to.eql('cancelled'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                "cancel",
+                ""
+              ]
+            },
+            "description": "Only orders in the `placed` state can be cancelled."
+          },
+          "response": []
+        }
+      ],
+      "description": "Checkout turns the cart into an order (status `placed`). Order history is private to each user. A placed order can be cancelled until it starts being prepared."
+    },
+    {
+      "name": "4. Comments & Favorites",
+      "item": [
+        {
+          "name": "Create comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Waiting for approval', () => pm.expect(pm.response.json().active).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"text\": \"Great taste, fast delivery!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/comments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "comments",
+                ""
+              ]
+            },
+            "description": "Requires login. The comment is created with `active: false` and is not public until approved by an admin; the author cannot set `active`."
+          },
+          "response": []
+        },
+        {
+          "name": "List approved comments of a food",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const results = pm.response.json().results;",
+                  "pm.test('Only approved comments are listed', () => pm.expect(results.every((c) => c.active === true)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/comments/?food={{food_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "comments",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "food",
+                  "value": "{{food_id}}"
+                }
+              ]
+            },
+            "description": "Public. Only approved comments are returned, so the new comment is not listed yet."
+          },
+          "response": []
+        },
+        {
+          "name": "Add favorite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('favorite_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/favorites/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "favorites",
+                ""
+              ]
+            },
+            "description": "Add a food to the current user's favorites."
+          },
+          "response": []
+        },
+        {
+          "name": "Add the same favorite again (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/favorites/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "favorites",
+                ""
+              ]
+            },
+            "description": "Duplicates are rejected with a clear validation error (not a 500)."
+          },
+          "response": []
+        },
+        {
+          "name": "List my favorites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contains the favorite', () => pm.expect(pm.response.json().count).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/favorites/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "favorites",
+                ""
+              ]
+            },
+            "description": "Only your own favorites are returned."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove favorite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/favorites/{{favorite_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "favorites",
+                "{{favorite_id}}",
+                ""
+              ]
+            },
+            "description": "Delete one of your favorites."
+          },
+          "response": []
+        }
+      ],
+      "description": "Comments are hidden until an admin approves them (Django admin). Favorites are private to each user."
+    },
+    {
+      "name": "5. Cart: remove & clear",
+      "item": [
+        {
+          "name": "Add item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('item_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "Start a new cart after the checkout."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/{{item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                "{{item_id}}",
+                ""
+              ]
+            },
+            "description": "Remove one item from the cart."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "Put something back in the cart."
+          },
+          "response": []
+        },
+        {
+          "name": "Clear cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                ""
+              ]
+            },
+            "description": "Remove all items from the cart."
+          },
+          "response": []
+        },
+        {
+          "name": "View cart (empty again)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const cart = pm.response.json();",
+                  "pm.test('Cart is empty', () => { pm.expect(cart.items).to.eql([]); pm.expect(cart.total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                ""
+              ]
+            },
+            "description": "The cart is empty again."
+          },
+          "response": []
+        }
+      ],
+      "description": "Remove a single item and empty the whole cart."
+    },
+    {
+      "name": "6. Error cases",
+      "item": [
+        {
+          "name": "Login with a wrong password (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"wrong-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                ""
+              ]
+            },
+            "description": "Wrong credentials."
+          },
+          "response": []
+        },
+        {
+          "name": "Cart without a token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                ""
+              ]
+            },
+            "description": "Protected endpoints need `Authorization: Bearer <access>`."
+          },
+          "response": []
+        },
+        {
+          "name": "Create a food as a normal user (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Not allowed\",\n  \"desc\": \"x\",\n  \"price\": 1000,\n  \"category\": \"{{category_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/foods/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ]
+            },
+            "description": "Only staff users can modify the menu."
+          },
+          "response": []
+        },
+        {
+          "name": "Checkout with an empty cart (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Explains why', () => pm.expect(pm.response.json().detail).to.eql('Your cart is empty.'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart/checkout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "checkout",
+                ""
+              ]
+            },
+            "description": "The cart was cleared in the previous folder."
+          },
+          "response": []
+        },
+        {
+          "name": "Add more than 50 of a food (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food\": \"{{food_id}}\",\n  \"quantity\": 51\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cart/items/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "items",
+                ""
+              ]
+            },
+            "description": "Quantity must be between 1 and 50."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel an already cancelled order (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                "cancel",
+                ""
+              ]
+            },
+            "description": "Only `placed` orders can be cancelled."
+          },
+          "response": []
+        }
+      ],
+      "description": "Requests that must be rejected. They prove authentication, permissions and validation work. Run after the folders above."
+    },
+    {
+      "name": "7. Admin (optional)",
+      "item": [
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('admin_token', pm.response.json().access);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                ""
+              ]
+            },
+            "description": "Login as a staff user. The token is saved as `admin_token`."
+          },
+          "response": []
+        },
+        {
+          "name": "Create category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('admin_category_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman test\",\n  \"slug\": \"postman-test-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/categories/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            },
+            "description": "Create a category (staff only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create food",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "const food = pm.response.json();",
+                  "pm.test('Slug was generated', () => pm.expect(food.slug).to.be.a('string'));",
+                  "pm.collectionVariables.set('admin_food_id', food.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman test food\",\n  \"desc\": \"Created by the collection runner\",\n  \"price\": 99000,\n  \"category\": \"{{admin_category_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/foods/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                ""
+              ]
+            },
+            "description": "Create a food. The slug is generated from the title when omitted."
+          },
+          "response": []
+        },
+        {
+          "name": "Update food price",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Price updated', () => pm.expect(pm.response.json().price).to.eql(123000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 123000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/foods/{{admin_food_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                "{{admin_food_id}}",
+                ""
+              ]
+            },
+            "description": "Partial update."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete food",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/foods/{{admin_food_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "foods",
+                "{{admin_food_id}}",
+                ""
+              ]
+            },
+            "description": "Foods that were ordered cannot be deleted (400): mark them unavailable instead."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories/{{admin_category_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{admin_category_id}}",
+                ""
+              ]
+            },
+            "description": "A category that still has foods cannot be deleted (400)."
+          },
+          "response": []
+        }
+      ],
+      "description": "Menu management for staff users. Create a superuser first (`python manage.py createsuperuser`) and set `admin_username` and `admin_password` in the collection (or environment) variables. Skip this folder if you have no admin account."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "password",
+      "value": "Str0ng-Pass!word"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin"
+    },
+    {
+      "key": "admin_password",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "category_id",
+      "value": ""
+    },
+    {
+      "key": "category_slug",
+      "value": ""
+    },
+    {
+      "key": "food_id",
+      "value": ""
+    },
+    {
+      "key": "item_id",
+      "value": ""
+    },
+    {
+      "key": "cart_total",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "favorite_id",
+      "value": ""
+    },
+    {
+      "key": "admin_category_id",
+      "value": ""
+    },
+    {
+      "key": "admin_food_id",
+      "value": ""
+    }
+  ]
+}
