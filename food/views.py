@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import ProtectedError, prefetch_related_objects
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -12,12 +12,20 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import serializers
 from .filters import FoodFilter
 from .models import MAX_QUANTITY, Category, Comment, Favorite, Food, Order, OrderItem
 from .permissions import IsAdminOrReadOnly, IsOwner
+
+# Swagger UI groups operations by these tags (see SPECTACULAR_SETTINGS['TAGS']).
+AUTH, MENU, CART, ORDERS, COMMENTS, FAVORITES = 'Auth', 'Menu', 'Cart', 'Orders', 'Comments', 'Favorites'
+
+
+def op(tag, summary, description=None, **kwargs):
+    """Shortcut for an @extend_schema with a tag, a summary and a description."""
+    return extend_schema(tags=[tag], summary=summary, description=description, **kwargs)
 
 
 def get_cart(user):
@@ -39,6 +47,24 @@ class ProtectedDeleteMixin:
 
 
 # ---------- Auth ----------
+@extend_schema_view(
+    post=op(
+        AUTH,
+        'Register',
+        'Create a new account. Afterwards call **Log in** to get a token.',
+        responses={
+            201: serializers.RegisterSerializer,
+            400: OpenApiResponse(description='Validation error: weak password or username already taken.'),
+        },
+        examples=[
+            OpenApiExample(
+                'New user',
+                value={'username': 'ali', 'email': 'ali@example.com', 'password': 'Str0ng-Pass!word'},
+                request_only=True,
+            )
+        ],
+    )
+)
 class RegisterView(CreateAPIView):
     serializer_class = serializers.RegisterSerializer
     permission_classes = [AllowAny]
@@ -46,12 +72,40 @@ class RegisterView(CreateAPIView):
     throttle_scope = 'register'
 
 
+@extend_schema_view(
+    post=op(
+        AUTH,
+        'Log in (get JWT tokens)',
+        'Returns a short-lived `access` token (60 minutes) and a `refresh` token (1 day). '
+        'Send the access token as `Authorization: Bearer <access>`; in Swagger UI click **Authorize** and paste it.',
+        examples=[OpenApiExample('Credentials', value={'username': 'ali', 'password': 'Str0ng-Pass!word'}, request_only=True)],
+    )
+)
 class LoginView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'login'
 
 
+@extend_schema_view(
+    post=op(AUTH, 'Refresh the access token', 'Exchange a valid `refresh` token for a new `access` token.')
+)
+class RefreshView(TokenRefreshView):
+    pass
+
+
 # ---------- Menu ----------
+@extend_schema_view(
+    list=op(MENU, 'List categories', 'Public. Paginated (10 per page, `?page=2`).'),
+    retrieve=op(MENU, 'Category detail', 'Public.'),
+    create=op(MENU, 'Create a category', 'Staff only.'),
+    update=op(MENU, 'Replace a category', 'Staff only.'),
+    partial_update=op(MENU, 'Update a category', 'Staff only.'),
+    destroy=op(
+        MENU,
+        'Delete a category',
+        'Staff only. Returns 400 while the category still has foods.',
+    ),
+)
 class CategoryViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
@@ -59,6 +113,23 @@ class CategoryViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
     protected_message = 'This category still has foods; move or delete them first.'
 
 
+@extend_schema_view(
+    list=op(
+        MENU,
+        'List foods',
+        'Public and paginated. Filter by `category` (slug), `available`, `min_price`, `max_price`; '
+        'search in title and description with `search`; sort with `ordering` (`price`, `-price`, `title`).',
+    ),
+    retrieve=op(MENU, 'Food detail', 'Public.'),
+    create=op(MENU, 'Create a food', 'Staff only. The slug is generated from the title when omitted.'),
+    update=op(MENU, 'Replace a food', 'Staff only.'),
+    partial_update=op(MENU, 'Update a food', 'Staff only.'),
+    destroy=op(
+        MENU,
+        'Delete a food',
+        'Staff only. Returns 400 if the food was ordered before; mark it `available: false` instead.',
+    ),
+)
 class FoodViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
     queryset = Food.objects.select_related('category')
     serializer_class = serializers.FoodSerializer
@@ -71,6 +142,18 @@ class FoodViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
 
 
 # ---------- Comments & favorites ----------
+@extend_schema_view(
+    list=op(
+        COMMENTS,
+        'List approved comments',
+        'Public. Only comments approved by an admin are returned. Use `?food=<id>` to get the comments of one food.',
+    ),
+    create=op(
+        COMMENTS,
+        'Create a comment',
+        'Requires login. The comment stays hidden (`active: false`) until an admin approves it.',
+    ),
+)
 class CommentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Approved comments are public; new comments wait for admin approval."""
 
@@ -85,6 +168,15 @@ class CommentViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.Ge
         serializer.save(user=self.request.user)
 
 
+@extend_schema_view(
+    list=op(FAVORITES, 'List my favorites', 'Only the favorites of the logged-in user.'),
+    create=op(
+        FAVORITES,
+        'Add a favorite',
+        'Returns 400 if the food is already in your favorites.',
+    ),
+    destroy=op(FAVORITES, 'Remove a favorite', 'Only your own favorites can be removed (others return 404).'),
+)
 class FavoriteViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -95,6 +187,8 @@ class FavoriteViewSet(
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generation has no real user
+            return Favorite.objects.none()
         return Favorite.objects.filter(user=self.request.user).select_related('food')
 
     def perform_create(self, serializer):
@@ -107,19 +201,49 @@ class CartView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'order'
 
-    @extend_schema(responses=serializers.OrderSerializer)
+    @extend_schema(
+        tags=[CART],
+        summary='View my cart',
+        description='The open cart of the logged-in user with its items and the server-side total. '
+        'It is created automatically on first use.',
+        responses=serializers.OrderSerializer,
+    )
     def get(self, request):
         cart = get_cart(request.user)
         prefetch_related_objects([cart], 'items__food')
         return Response(serializers.OrderSerializer(cart).data)
 
-    @extend_schema(responses={204: None})
+    @extend_schema(tags=[CART], summary='Empty the cart', description='Remove all items from the cart.', responses={204: None})
     def delete(self, request):
         """Empty the cart."""
         get_cart(request.user).items.all().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema_view(
+    create=op(
+        CART,
+        'Add a food to the cart',
+        'Adds the food with the current menu price. If the food is already in the cart its quantity '
+        f'increases (200 instead of 201). Quantity must be between 1 and {MAX_QUANTITY}.',
+        responses={
+            201: serializers.OrderItemSerializer,
+            200: OpenApiResponse(
+                response=serializers.OrderItemSerializer,
+                description='The food was already in the cart; its quantity was increased.',
+            ),
+            400: OpenApiResponse(description='Invalid quantity, or the food is unavailable.'),
+        },
+        examples=[OpenApiExample('Two portions', value={'food': 1, 'quantity': 2}, request_only=True)],
+    ),
+    partial_update=op(
+        CART,
+        'Change the quantity of a cart item',
+        'Only items of your own open cart can be changed (others return 404).',
+        examples=[OpenApiExample('New quantity', value={'quantity': 3}, request_only=True)],
+    ),
+    destroy=op(CART, 'Remove an item from the cart', 'Only items of your own open cart can be removed.'),
+)
 class CartItemViewSet(
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
@@ -135,6 +259,8 @@ class CartItemViewSet(
     throttle_scope = 'order'
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generation has no real user
+            return OrderItem.objects.none()
         return OrderItem.objects.filter(
             order__user=self.request.user,
             order__status=Order.Status.CART,
@@ -167,7 +293,17 @@ class CheckoutView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'order'
 
-    @extend_schema(request=None, responses={201: serializers.OrderSerializer})
+    @extend_schema(
+        tags=[CART],
+        summary='Checkout: place the order',
+        description='Turns the cart into an order with status `placed`. Items are re-priced at the current '
+        'menu price inside a database transaction.',
+        request=None,
+        responses={
+            201: serializers.OrderSerializer,
+            400: OpenApiResponse(description='The cart is empty, or a food is no longer available.'),
+        },
+    )
     def post(self, request):
         """Turn the cart into a placed order, re-pricing items at the current menu price."""
         with transaction.atomic():
@@ -199,6 +335,10 @@ class CheckoutView(APIView):
 
 
 # ---------- Orders ----------
+@extend_schema_view(
+    list=op(ORDERS, 'List my orders', 'Order history of the logged-in user. The open cart is not included.'),
+    retrieve=op(ORDERS, 'Order detail', 'Only your own orders (others return 404).'),
+)
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """Order history of the current user (the open cart is not listed here)."""
 
@@ -208,13 +348,24 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     throttle_scope = 'order'
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generation has no real user
+            return Order.objects.none()
         return (
             Order.objects.filter(user=self.request.user)
             .exclude(status=Order.Status.CART)
             .prefetch_related('items__food')
         )
 
-    @extend_schema(request=None, responses=serializers.OrderSerializer)
+    @extend_schema(
+        tags=[ORDERS],
+        summary='Cancel an order',
+        description='Only orders in the `placed` state can be cancelled.',
+        request=None,
+        responses={
+            200: serializers.OrderSerializer,
+            400: OpenApiResponse(description='The order is no longer in the "placed" state.'),
+        },
+    )
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """Cancel an order that has been placed but not yet prepared."""

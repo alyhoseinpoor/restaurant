@@ -156,9 +156,35 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Restaurant API',
-    'DESCRIPTION': 'Menu, cart, orders, comments and favorites for a restaurant.',
+    'DESCRIPTION': (
+        'REST API for a restaurant: menu, cart, checkout, orders, comments and favorites.\n\n'
+        '## Try it in 4 steps\n'
+        '1. **Auth → Register** to create an account.\n'
+        '2. **Auth → Log in** and copy the `access` token from the response.\n'
+        '3. Click **Authorize** (top right) and paste the token. Swagger adds `Bearer` for you.\n'
+        '4. Follow the flow: **Menu → List foods**, **Cart → Add a food to the cart**, '
+        '**Cart → Checkout**, **Orders → List my orders**.\n\n'
+        'List endpoints are paginated (10 per page, use `?page=2`). '
+        'A Postman collection with the same flow is in the repository (`docs/`).'
+    ),
     'VERSION': '1.0.0',
+    'CONTACT': {'name': 'Source code on GitHub', 'url': 'https://github.com/alyhoseinpoor/restaurant'},
     'SERVE_INCLUDE_SCHEMA': False,
+    'SERVERS': [{'url': 'http://localhost:8000', 'description': 'Local development'}],
+    # Order of the groups in Swagger UI follows the user flow.
+    'TAGS': [
+        {'name': 'Auth', 'description': 'Register and get JWT tokens.'},
+        {'name': 'Menu', 'description': 'Categories and foods. Public to read, staff only to change.'},
+        {'name': 'Cart', 'description': 'The logged-in user\'s cart and checkout.'},
+        {'name': 'Orders', 'description': 'Order history and cancellation.'},
+        {'name': 'Comments', 'description': 'Food comments. New comments wait for admin approval.'},
+        {'name': 'Favorites', 'description': 'Foods saved by the logged-in user.'},
+    ],
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,  # keep the token after a page reload
+        'displayRequestDuration': True,
+        'docExpansion': 'none',  # start collapsed; open one group at a time
+    },
 }
 
 SIMPLE_JWT = {

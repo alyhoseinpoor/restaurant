@@ -112,7 +112,18 @@ order lifecycle, ownership rules, comment moderation and the OpenAPI schema.
 | Docs | `/api/docs/`, `/api/redoc/`, `/api/schema/` | |
 
 Authenticate with the header `Authorization: Bearer <access token>`.
-A Postman collection is available in [`docs/`](docs/).
+
+### API documentation
+
+| What | Where |
+|------|-------|
+| **Swagger UI** (try every endpoint in the browser) | `http://localhost:8000/api/docs/` |
+| ReDoc (reading view) | `http://localhost:8000/api/redoc/` |
+| **OpenAPI 3 schema** (file, for code generators and API tools) | [`docs/openapi.yaml`](docs/openapi.yaml) |
+| **Postman collection** and environment | [`docs/`](docs/) |
+
+Using Swagger UI: **Auth → Register**, then **Auth → Log in**, copy the `access` token, click **Authorize** and paste it.
+Regenerate the schema after changing the API: `python manage.py spectacular --file docs/openapi.yaml --validate`.
 
 ## Design decisions
 

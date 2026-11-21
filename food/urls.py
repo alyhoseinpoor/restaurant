@@ -1,7 +1,5 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
-
 from .views import (
     CartItemViewSet,
     CartView,
@@ -12,6 +10,7 @@ from .views import (
     FoodViewSet,
     LoginView,
     OrderViewSet,
+    RefreshView,
     RegisterView,
 )
 
@@ -29,5 +28,5 @@ urlpatterns = [
     path('api/cart/checkout/', CheckoutView.as_view(), name='checkout'),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/token/', LoginView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/refresh/', RefreshView.as_view(), name='token_refresh'),
 ]
