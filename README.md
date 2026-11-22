@@ -5,6 +5,7 @@ Customers browse the menu, keep a cart, place orders, comment on and favorite fo
 Staff manage the menu and moderate comments from the Django admin.
 
 > **فارسی:** بک‌اند سفارش‌گیری رستوران با جنگو و DRF؛ شامل منو، سبد خرید، ثبت سفارش، کامنت (با تأیید ادمین)، علاقه‌مندی‌ها، احراز هویت JWT، مستندات Swagger، تست خودکار و Docker.
+![Swagger UI](docs/swagger.png)
 
 ## Features
 
